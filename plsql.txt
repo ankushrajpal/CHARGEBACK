@@ -1,0 +1,59 @@
+create or replace procedure proc
+is
+cb number;
+date_diff number;
+trans_amt number;
+trans_id number;
+id number;
+CURSOR get_diff is  
+      SELECT transaction_id,transaction_amount,date_of_transaction-expected_transaction_date as date_diff FROM transaction;  
+
+begin
+
+     for record in get_diff
+	loop
+	  if (record.date_diff>0)
+		then
+		cb:=(record.date_diff*0.0548)*record.transaction_amount;
+		update transaction set chargeback_amount=cb where transaction_id=trans_id;
+		
+		end if;
+		dbms_output.put_line('dddf');
+   END LOOP;  
+
+end
+
+update transaction set chargeback_amount=cb where transaction_id=trans_id;
+
+
+create or replace procedure set_chargeback(id  number,amt number,date_diff number)
+is
+cb number;
+begin
+  
+	if (date_diff>0)
+		then
+		cb:=(date_diff*0.0548)*amt;
+		
+		dbms_output.put_line(cb);
+		
+	end if;
+end
+
+create or replace trigger setChargeback
+before
+insert or update
+on transaction
+FOR EACH ROW
+declare
+date_diff number;
+cb number;
+begin
+	date_diff:=:new.date_of_transaction-:new.expected_transaction_date;
+  if (date_diff>0)
+		then
+		cb:=(date_diff*0.000548)*:new.transaction_amount;
+		:new.chargeback_amount:=cb ;		
+		
+	end if;
+end
